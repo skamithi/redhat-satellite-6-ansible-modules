@@ -233,7 +233,7 @@ def main():
     )
 
     module.params['gather_subsets'] = \
-        set(module.params['gather_subsets']) | set(['all'])
+        set(module.params.get(['gather_subsets'])) | set(['all'])
 
     # disable checking cert and force basic auth. may change in the future
     module.params['force_basic_auth'] = True
