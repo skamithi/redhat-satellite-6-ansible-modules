@@ -1,0 +1,22 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: no
+  tasks:
+    - satellite_facts:
+        url_username: admin
+        hostname: satellite.linuxsimba.local
+        url_password: tower
+        gather_subsets:
+          - capsule
+      register: capsule_info
+
+    - debug: msg="{{ capsule_info | get_capsule_id('satellite.linuxsimba.local', 'realm') }}"
+
+    - satellite_realms:
+        url_username: admin
+        url_password: tower
+        hostname: satellite.linuxsimba.local
+        realm_name: testme3
+        realm_capsule_id: "{{ capsule_info | get_capsule_id('satellite.linuxsimba.local', 'realm')}}"
+        realm_type: "Active Directory"

@@ -21,11 +21,17 @@ description:
   - Gather facts from a Satellite Server 6.X server
 author: Stanley Karunditu (@linuxsimba)
 options:
-    username:
+    hostname:
+        description:
+            - FQDN or IP of Satellite Server. This only needs to be
+            - set when running the module using "connection:local"
+        default: localhost
+
+    url_username:
         description:
             - Username to access satellite REST API resources
         required: true
-    password:
+    url_password:
         description:
             - Password to access satellite Rest API resources
         required: true
@@ -39,13 +45,13 @@ options:
 EXAMPLES = '''
 # Gather All Satellite Facts
 satellite_facts:
-    username: "{{ vault_satellite_user }}"
-    password: "{{ vault_satellite_pass }}"
+    url_username: "{{ vault_satellite_user }}"
+    url_password: "{{ vault_satellite_pass }}"
 
 # Only Gather smart proxies and domains
 satellite_facts:
-    username: "{{ vault_satellite_user }}"
-    password: "{{ vault_satellite_pass }}"
+    url_username: "{{ vault_satellite_user }}"
+    url_password: "{{ vault_satellite_pass }}"
     gather_subsets:
         - smart_proxy
         - domain
@@ -75,7 +81,6 @@ satellite:
     ...(array of smart proxies)
 '''
 
-import json
 from ansible.module_utils.six import iteritems
 from ansible.module_utils.basic import AnsibleModule
 from ansible.module_utils.urls import fetch_url
@@ -103,8 +108,10 @@ class SatelliteFacts(object):
                                data=None,
                                headers={'Content-type': 'application/json'},
                                method="GET")
+        if info.get('exception'):
+            self.module.fail_json(msg=info.get('exception'))
         body = resp.read()
-        body = json.loads(body.strip())
+        body = self.module.from_json(body.strip())
         if body.get('page') and body.get('total'):
             page_num = int(body.get('page'))
             total_pages = int(body.get('total'))
@@ -161,7 +168,7 @@ class SatelliteFacts(object):
             features = []
 
             for _feature in capsule_details.get('features'):
-                features.append(_feature.get('name'))
+                features.append(_feature.get('name').lower())
 
             capsule = {
                 "features": features,
@@ -208,8 +215,8 @@ def main():
     module = AnsibleModule(
         argument_spec=dict(
             hostname=dict(default='localhost', type='str'),
-            username=dict(required=True, type='str'),
-            password=dict(required=True, type='str',
+            url_username=dict(required=True, type='str'),
+            url_password=dict(required=True, type='str',
                           no_log=True),
             gather_subsets=dict(default=['all'], type='list')
         ),
@@ -218,9 +225,8 @@ def main():
 
     module.params['gather_subsets'] = \
         set(module.params['gather_subsets']) | set(['all'])
-    # url_username and url_password needed for fetch_url function
-    module.params['url_username'] = module.params.get('username')
-    module.params['url_password'] = module.params.get('password')
+
+    # disable checking cert and force basic auth. may change in the future
     module.params['force_basic_auth'] = True
     module.params['validate_certs'] = False
 
