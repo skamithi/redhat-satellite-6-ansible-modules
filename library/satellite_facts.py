@@ -111,7 +111,6 @@ class SatelliteFacts(object):
             while (page_num <= total_pages):
                 new_page_num = int(body.get('page')) + 1
                 _uri = uri.split('?')[0] + "?page=" + str(new_page_num)
-                import pdb; pdb.set_trace()
                 body = body.get('results')
                 return body + self.url(_uri)
             return []
@@ -178,9 +177,9 @@ class SatelliteFacts(object):
         list operating system details
         """
         os_facts = self.facts['operatingsystems'] = []
-        os_summary = self.url('/api/organizations')
+        os_summary = self.url('/api/operatingsystems')
         for _entry in os_summary:
-            os_details = self.url("/api/organizations/%s" % (_entry.get('id')))
+            os_details = self.url("/api/operatingsystems/%s" % (_entry.get('id')))
             os_facts.append(os_details)
 
     def get_facts(self):
