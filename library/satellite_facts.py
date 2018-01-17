@@ -200,21 +200,22 @@ class SatelliteFacts(object):
         Generate all facts to the self.facts dict
         """
         gather_subsets = self.module.params.get('gather_subsets')
+
         if 'all' in gather_subsets:
             self.get_status()
-        if set(['all', 'smart_proxy']).issubset(gather_subsets):
+        if set(['all', 'smart_proxy']).issuperset(gather_subsets):
             self.get_smart_proxy()
-        if set(['all', 'capsule']).issubset(gather_subsets):
+        if set(['all', 'capsule']).issuperset(gather_subsets):
             self.get_capsule_info()
-        if set(['all', 'location']).issubset(gather_subsets):
+        if set(['all', 'location']).issuperset(gather_subsets):
             self.get_locations()
-        if set(['all', 'domain']).issubset(gather_subsets):
+        if set(['all', 'domain']).issuperset(gather_subsets):
             self.get_domains()
-        if set(['all', 'host']).issubset(gather_subsets):
+        if set(['all', 'host']).issuperset(gather_subsets):
             self.get_hosts()
-        if set(['all', 'operatingsystem']).issubset(gather_subsets):
+        if set(['all', 'operatingsystem']).issuperset(gather_subsets):
             self.get_operatingsystems()
-        if set(['all', 'organization']).issubset(gather_subsets):
+        if set(['all', 'organization']).issuperset(gather_subsets):
             self.get_organizations()
         return {'satellite': self.facts}
 

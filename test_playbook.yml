@@ -26,7 +26,7 @@
         url_username: admin
         url_password: tower
         hostname: satellite.linuxsimba.local
-        realm_name: dumbo22444232323
+        realm_name: testrealm01
         realm_organization_ids: "{{ satellite_info | json_query(\"ansible_facts.satellite.organizations[?name=='\" + org_name + \"'].id\")}}"
         realm_capsule_id: "{{ satellite_info | get_capsule_id('satellite.linuxsimba.local', 'realm')}}"
         realm_type: "Red Hat Identity Management"
