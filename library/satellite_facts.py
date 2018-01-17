@@ -38,7 +38,7 @@ options:
     gather_subsets:
         description:
             - list of facts of list. Options are
-            - "all,domain,host,location,capsule,operatingsystem,smart_proxy"
+            - "all,domain,host,location,capsule,operatingsystem,smart_proxy,organization"
         default: all
 '''
 
@@ -129,6 +129,12 @@ class SatelliteFacts(object):
         """
         self.facts['hosts'] = self.url('/api/hosts')
 
+    def get_organizations(self):
+        """
+        get org list
+        """
+        self.facts['organizations'] = self.url('/api/organizations')
+
     def get_domains(self):
         """
         Get Domains
@@ -208,6 +214,8 @@ class SatelliteFacts(object):
             self.get_hosts()
         if set(['all', 'operatingsystem']).issubset(gather_subsets):
             self.get_operatingsystems()
+        if set(['all', 'organization']).issubset(gather_subsets):
+            self.get_organizations()
         return {'satellite': self.facts}
 
 

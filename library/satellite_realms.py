@@ -48,6 +48,19 @@ options:
             - or "Active Directory"
         choices: ["Red Hat Identity Management", "Active Directory"]
         default: "Red Hat Identity Management"
+    realm_organization_ids:
+        description:
+            - Realm Organization. Input a list of organization IDs
+        required: True
+    realm_location_ids:
+        description:
+            - Realm Location. Input a list of location IDs
+        required: False
+    state:
+        description:
+            - Create or remove a Realm
+        default: present
+        choices: ['present', 'absent']
 
 '''
 
@@ -58,7 +71,8 @@ satellite_facts:
     url_password: "{{ vault_satellite_pass }}"
     gather_subsets:
         - capsule
-    register: capsule_info
+        - organization
+    register: satellite_info
 
 # Use get_capsule_id Ansible filter which takes 2 arguments
 # get_capsule_id(<capsule name>, <feature>).
@@ -68,8 +82,9 @@ satellite_realms:
     url_username: "{{ vault_satellite_user }}"
     url_password: "{{ vault_satellite_pass }}"
     realm_name: "first realm"
-    realm_capsule_id: capsule_info | get_capsule_id('satellite.linuxsimba.local', 'Realm')
+    realm_capsule_id: satellite_info | get_capsule_id('satellite.linuxsimba.local', 'Realm')
     realm_type: "Active Directory"
+    state: present
 
 '''
 
@@ -84,6 +99,18 @@ class SatelliteRealm(object):
         self.module = module
         self.msg = ''
         self.changed = False
+
+    def delete_object(self, uri):
+        url = "https://%s%s/%s" % (self.module.params.get('hostname'),
+                                   uri, self.module.params.get('realm_name'))
+        resp, info = fetch_url(self.module, url, data=None,headers={"Content-type": "application/json"},
+                               method="DELETE")
+        if info.get('exception'):
+            self.module.fail_json(msg=info.get('exception'))
+        if info.get('status') == 404:
+            return (False,'Realm already removed')
+        if info.get('status') == 200:
+            return (True, "Realm %s removed" % (self.module.params.get('realm_name')))
 
     def url(self, uri):
         _url = "https://%s%s" % (self.module.params.get('hostname'), uri)
@@ -120,7 +147,9 @@ class SatelliteRealm(object):
         _data = {
             "name": self.module.params.get('realm_name'),
             "realm_proxy_id": self.module.params.get('realm_capsule_id'),
-            "realm_type": self.module.params.get('realm_type')
+            "realm_type": self.module.params.get('realm_type'),
+            "organization_ids": self.module.params.get('realm_organization_ids'),
+            "location_ids": self.module.params.get('realm_location_ids')
         }
 
         _url = "https://%s%s" % (self.module.params.get('hostname'), uri)
@@ -153,7 +182,10 @@ def main():
             realm_type=dict(default="Red Hat Identity Management", type='str',
                             choices=["Red Hat Identity Management",
                                      "Active Directory"]),
-            realm_capsule_id=dict(required=True, type='int')
+            realm_capsule_id=dict(required=True, type='int'),
+            realm_organization_ids=dict(required=True, type='list'),
+            realm_location_ids=dict(required=False, type='list', default=[]),
+            state=dict(default='present', type=str)
         ),
         supports_check_mode=False
     )
@@ -165,7 +197,10 @@ def main():
     satellite_realm = SatelliteRealm(module)
     results = {}
     results['changed'] = False
-    (results['changed'], results['msg']) = satellite_realm.set_realm()
+    if module.params.get('state') == 'present':
+        (results['changed'], results['msg']) = satellite_realm.set_realm()
+    else:
+        (results['changed'], results['msg']) = satellite_realm.delete_object('/api/realms')
     module.exit_json(**results)
 
 
