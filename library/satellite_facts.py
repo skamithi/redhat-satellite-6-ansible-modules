@@ -203,19 +203,19 @@ class SatelliteFacts(object):
 
         if 'all' in gather_subsets:
             self.get_status()
-        if set(['all', 'smart_proxy']).issuperset(gather_subsets):
+        if 'smart_proxy' in gather_subsets:
             self.get_smart_proxy()
-        if set(['all', 'capsule']).issuperset(gather_subsets):
+        if 'capsule' in gather_subsets:
             self.get_capsule_info()
-        if set(['all', 'location']).issuperset(gather_subsets):
+        if 'location' in gather_subsets:
             self.get_locations()
-        if set(['all', 'domain']).issuperset(gather_subsets):
+        if 'domain' in gather_subsets:
             self.get_domains()
-        if set(['all', 'host']).issuperset(gather_subsets):
+        if 'host' in gather_subsets:
             self.get_hosts()
-        if set(['all', 'operatingsystem']).issuperset(gather_subsets):
+        if 'operatingsystem' in gather_subsets:
             self.get_operatingsystems()
-        if set(['all', 'organization']).issuperset(gather_subsets):
+        if 'organization' in gather_subsets:
             self.get_organizations()
         return {'satellite': self.facts}
 
@@ -226,14 +226,16 @@ def main():
             hostname=dict(default='localhost', type='str'),
             url_username=dict(required=True, type='str'),
             url_password=dict(required=True, type='str',
-                          no_log=True),
+                              no_log=True),
             gather_subsets=dict(default=['all'], type='list')
         ),
         supports_check_mode=False
     )
 
-    module.params['gather_subsets'] = \
-        set(module.params.get('gather_subsets')) | set(['all'])
+    if module.params.get('gather_subsets') == ['all']:
+        module.params['gather_subsets'] = [
+            'smart_proxy', 'capsule', 'location', 'domain',
+            'host', 'operatingsystem', 'organization']
 
     # disable checking cert and force basic auth. may change in the future
     module.params['force_basic_auth'] = True
