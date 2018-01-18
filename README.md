@@ -18,7 +18,8 @@ is the backbone of this git repository
 
 ## Examples
 
-A sample playbook called ``test_playbook.yml`` is included to showcase the modules
+A sample playbook called ``test_playbook.yml`` is included to showcase the modules doing remote REST API calls
+A sample playbook called ``test_playbook_exec_on_satellite.yml`` showcases running the modules from the satellite server. So no remote REST API calls
 
 ## License
 

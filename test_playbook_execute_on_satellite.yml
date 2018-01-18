@@ -1,0 +1,30 @@
+---
+# No need to specify hostname. This task is executed directly on the satellite node so no API
+# calls are performed outside the satellite server
+- hosts: satellite.linuxsimba.local
+  gather_facts: no
+  vars:
+    org_name: linuxsimba
+  tasks:
+    - satellite_facts:
+        url_username: admin
+        url_password: tower
+        gather_subsets:
+      register: satellite_info
+
+    - name: |
+        set Satellite Realm.
+        Organization is determine by passing the Org name it outputs a ID. Yes it has a scary looking json_query filter.
+        json_query filters can get very complex.
+        state = present meaning create the Realm
+        capsule_id is determine using an custom Ansible filter. Give the module the satellite fact
+        data then it filters based on capsule name and feature name. If the capsule doesn't have that realm,
+        then the module fails.
+      satellite_realms:
+        url_username: admin
+        url_password: tower
+        realm_name: testrealm01
+        realm_organization_ids: "{{ satellite_info | json_query(\"ansible_facts.satellite.organizations[?name=='\" + org_name + \"'].id\")}}"
+        realm_capsule_id: "{{ satellite_info | get_capsule_id('satellite.linuxsimba.local', 'realm')}}"
+        realm_type: "Red Hat Identity Management"
+        state: present
